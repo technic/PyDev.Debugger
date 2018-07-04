@@ -1261,6 +1261,9 @@ def settrace(
             patch_multiprocessing,
             stop_at_frame,
         )
+    except:
+        import traceback;traceback.print_exc()
+        raise
     finally:
         _set_trace_lock.release()
 
@@ -1295,6 +1298,7 @@ def _locked_settrace(
     global bufferStdOutToServer
     global bufferStdErrToServer
 
+    print('setting trace, currently connected: %s' % (connected,))
     if not connected:
         pydevd_vm_type.setup_type()
 
@@ -1307,8 +1311,11 @@ def _locked_settrace(
             }
             SetupHolder.setup = setup
 
+        print('Creating debugger.')
         debugger = PyDB()
+        print('Waiting for connection with: %s, %s.' % (host, port))
         debugger.connect(host, port)  # Note: connect can raise error.
+        print('Connected')
 
         # Mark connected only if it actually succeeded.
         connected = True
@@ -1321,7 +1328,9 @@ def _locked_settrace(
         if bufferStdErrToServer:
             init_stderr_redirect()
 
+        print('Patching stdin')
         patch_stdin(debugger)
+        print('Setting trace')
         debugger.set_trace_for_frame_and_parents(get_frame(), False, overwrite_prev_trace=overwrite_prev_trace)
 
 
@@ -1332,14 +1341,18 @@ def _locked_settrace(
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
-
+        print('Setting thread additional info')
         t = threadingCurrentThread()
         additional_info = set_additional_thread_info(t)
 
+        print('0. waiting to be ready to run')
         while not debugger.ready_to_run:
+            print('1. waiting to be ready to run')
             time.sleep(0.1)  # busy wait until we receive run command
+        print('ok, ready to run')
 
         global forked
+        print('forked: %s' % (forked,))
         frame_eval_for_tracing = debugger.frame_eval_func
         if frame_eval_func is not None and not forked:
             # Disable frame evaluation for Remote Debug Server
@@ -1347,22 +1360,29 @@ def _locked_settrace(
 
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
         # is not warned to the user!
+        print('frame_eval_for_tracing: %s' % (frame_eval_for_tracing,))
         pydevd_tracing.SetTrace(debugger.trace_dispatch, frame_eval_for_tracing, debugger.dummy_trace_dispatch)
 
         if not trace_only_current_thread:
             # Trace future threads?
+            print('patching threads')
             debugger.patch_threads()
 
             # As this is the first connection, also set tracing for any untraced threads
+            print('patching set_tracing_for_untraced_contexts')
             debugger.set_tracing_for_untraced_contexts(ignore_frame=get_frame(), overwrite_prev_trace=overwrite_prev_trace)
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
 
+        print('starting PyDBCommandThread')
         PyDBCommandThread(debugger).start()
+        print('starting CheckOutputThread')
         CheckOutputThread(debugger).start()
+        print('started threads')
 
     else:
+        print('Already in debug mode (just setting tracing).')
         # ok, we're already in debug mode, with all set, so, let's just set the break
         debugger = get_global_debugger()
 
@@ -1377,6 +1397,7 @@ def _locked_settrace(
             # Trace future threads?
             debugger.patch_threads()
 
+    print('Suspend: %s' % (suspend,))
     # Suspend as the last thing after all tracing is in place.
     if suspend:
         if stop_at_frame is not None:
@@ -1389,6 +1410,7 @@ def _locked_settrace(
         else:
             # Ask to break as soon as possible.
             debugger.set_suspend(t, CMD_THREAD_SUSPEND)
+    print('Finished settrace.')
 
 
 def stoptrace():
