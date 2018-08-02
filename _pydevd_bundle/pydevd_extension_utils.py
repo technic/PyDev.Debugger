@@ -26,7 +26,7 @@ class ExtensionManager(object):
                         module = sys.modules[name]
                         self.loaded_extensions.append(module)
                     except ImportError:
-                        pydev_log.error('Unable to load extension ' + name)
+                        pydev_log.error('Unable to load extension: %s' % (name,))
 
     def _ensure_loaded(self):
         if self.loaded_extensions is None:
@@ -50,7 +50,7 @@ class ExtensionManager(object):
                 try:
                     handlers.append(attr())
                 except:
-                    pydev_log.error('Unable to load extension class' + attr_name, tb=True)
+                    pydev_log.error('Unable to load extension class: %s' % (attr_name,), tb=True)
         return handlers
 
 

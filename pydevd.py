@@ -32,7 +32,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
-    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
+    set_global_debugger, WriterThread, pydevd_find_thread_by_id, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
@@ -111,14 +111,14 @@ class PyDBCommandThread(PyDBDaemonThread):
                 try:
                     self.py_db.process_internal_commands()
                 except:
-                    pydevd_log(0, 'Finishing debug communication...(2)')
+                    pydev_log.error('Finishing debug communication...(2)')
                 self._py_db_command_thread_event.clear()
                 self._py_db_command_thread_event.wait(0.3)
         except:
             pydev_log.debug(sys.exc_info()[0])
 
             #only got this error in interpreter shutdown
-            #pydevd_log(0, 'Finishing debug communication...(3)')
+            #pydev_log.error('Finishing debug communication...(3)')
 
 
 #=======================================================================================================================
@@ -294,7 +294,7 @@ class PyDB:
                 continue
 
             if isinstance(t, PyDBDaemonThread):
-                pydev_log.error_once(
+                pydev_log.user_warning_once(
                     'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
             if is_thread_alive(t):
@@ -493,7 +493,7 @@ class PyDB:
                     if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
                     elif isinstance(t, PyDBDaemonThread):
-                        pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+                        pydev_log.user_warning_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
                     elif is_thread_alive(t):
                         if not self._running_thread_ids:
@@ -553,7 +553,7 @@ class PyDB:
                                     self.init_matplotlib_in_debug_console()
                                     self.mpl_in_use = True
                                 except:
-                                    pydevd_log(2, "Matplotlib support in debug console failed", traceback.format_exc())
+                                    pydev_log.debug("Matplotlib support in debug console failed: %s" % (traceback.format_exc(),))
                                 self.mpl_hooks_in_debug_console = True
 
                             if curr_thread_id is None:
@@ -561,10 +561,10 @@ class PyDB:
                                 curr_thread_id = get_thread_id(threadingCurrentThread())
 
                             if int_cmd.can_be_executed_by(curr_thread_id):
-                                pydevd_log(2, "processing internal command ", str(int_cmd))
+                                pydev_log.debug("Processing internal command: %s" % (int_cmd,))
                                 int_cmd.do_it(self)
                             else:
-                                pydevd_log(2, "NOT processing internal command ", str(int_cmd))
+                                pydev_log.debug("NOT processing internal command: %s" % (int_cmd,))
                                 cmdsToReadd.append(int_cmd)
 
 

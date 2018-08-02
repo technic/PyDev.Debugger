@@ -20,7 +20,7 @@ def log_debug(msg):
 
 
 def log_error_once(msg):
-    pydev_log.error_once(msg)
+    pydev_log.user_warning_once(msg)
 
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 

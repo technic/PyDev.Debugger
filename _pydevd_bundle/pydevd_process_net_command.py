@@ -399,7 +399,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                             breakpoints = result
 
                     if file_to_id_to_breakpoint is None:
-                        pydev_log.error('Error removing breakpoint. Cant handle breakpoint of type %s' % breakpoint_type)
+                        pydev_log.error("Error removing breakpoint. Can't handle breakpoint of type %s" % (breakpoint_type,))
                     else:
                         try:
                             id_to_pybreakpoint = file_to_id_to_breakpoint.get(file, {})

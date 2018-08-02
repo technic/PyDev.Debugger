@@ -184,6 +184,7 @@ CMD_SET_PROJECT_ROOTS = 202
 
 CMD_VERSION = 501
 CMD_RETURN = 502
+CMD_LOG = 900
 CMD_ERROR = 901
 
 ID_TO_MEANING = {
@@ -249,6 +250,7 @@ ID_TO_MEANING = {
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
+    '900': 'CMD_LOG',
     '901': 'CMD_ERROR',
     }
 
@@ -261,26 +263,6 @@ from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
 filesystem_encoding_is_utf8 = file_system_encoding.lower() in ('utf-8', 'utf_8', 'utf8')
 
-#--------------------------------------------------------------------------------------------------- UTILITIES
-
-#=======================================================================================================================
-# pydevd_log
-#=======================================================================================================================
-def pydevd_log(level, *args):
-    """ levels are:
-        0 most serious warnings/errors
-        1 warnings/significant events
-        2 informational trace
-    """
-    if level <= DebugInfoHolder.DEBUG_TRACE_LEVEL:
-        #yes, we can have errors printing if the console of the program has been finished (and we're still trying to print something)
-        try:
-            sys.stderr.write('%s\n' % (args,))
-        except:
-            pass
-
-
-#------------------------------------------------------------------- ACTUAL COMM
 
 #=======================================================================================================================
 # PyDBDaemonThread
@@ -463,9 +445,9 @@ class WriterThread(PyDBDaemonThread):
                         else:
                             continue
                 except:
-                    #pydevd_log(0, 'Finishing debug communication...(1)')
-                    #when liberating the thread here, we could have errors because we were shutting down
-                    #but the thread was still not liberated
+                    # pydev_log.error('Finishing debug communication...(1)')
+                    # when liberating the thread here, we could have errors because we were shutting down
+                    # but the thread was still not liberated
                     return
                 out = cmd.outgoing
 
@@ -514,12 +496,12 @@ def start_server(port):
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
     s.bind(('', port))
-    pydevd_log(1, "Bound to port ", str(port))
+    pydev_log.info("Bound to port: %s" % (port,))
 
     try:
         s.listen(1)
         newSock, _addr = s.accept()
-        pydevd_log(1, "Connection accepted")
+        pydev_log.info("Connection accepted")
         # closing server socket is not necessary but we don't need it
         s.shutdown(SHUT_RDWR)
         s.close()
@@ -535,7 +517,7 @@ def start_server(port):
 #=======================================================================================================================
 def start_client(host, port):
     """ connects to a host/port """
-    pydevd_log(1, "Connecting to ", host, ":", str(port))
+    pydev_log.info("Connecting to %s:%s", (host, port))
 
     s = socket(AF_INET, SOCK_STREAM)
 
@@ -561,7 +543,7 @@ def start_client(host, port):
             i+=1
             time.sleep(0.2)
             continue
-        pydevd_log(1, "Connected.")
+        pydev_log.info("Connected.")
         return s
 
     sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
@@ -612,6 +594,10 @@ class NetCommandFactory:
         cmd = NetCommand(CMD_ERROR, seq, text)
         if DebugInfoHolder.DEBUG_TRACE_LEVEL > 2:
             sys.stderr.write("Error: %s" % (text,))
+        return cmd
+
+    def make_log_message(self, seq, level, text):
+        cmd = NetCommand(CMD_ERROR, seq, '%s\t%s' % (level, text,))
         return cmd
 
     def make_thread_created_message(self, thread):
@@ -1039,7 +1025,7 @@ class InternalTerminateThread(InternalThreadCommand):
         self.thread_id = thread_id
 
     def do_it(self, dbg):
-        pydevd_log(1, "killing ", str(self.thread_id))
+        pydev_log.info("Killing: %s" % (self.thread_id,))
         cmd = dbg.cmd_factory.make_thread_killed_message(self.thread_id)
         dbg.writer.add_command(cmd)
 

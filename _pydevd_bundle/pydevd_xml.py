@@ -264,8 +264,7 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
                 else:
                     xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val)
         except Exception:
-            traceback.print_exc()
-            pydev_log.error("Unexpected error, recovered safely.\n")
+            pydev_log.error("Unexpected error, recovered safely.\n", tb=True)
 
     # Show return values as the first entry.
     return return_values_xml + xml

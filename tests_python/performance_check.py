@@ -63,12 +63,12 @@ class WriterThreadPerformance3(PerformanceWriterThread):
         self.write_add_breakpoint(26, None)
 
         self.write_make_initial_run()
-        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        hit = self.wait_for_breakpoint_hit('111')
 
-        self.write_step_over(thread_id)
-        thread_id, frame_id, line = self.wait_for_breakpoint_hit('108', True)
+        self.write_step_over(hit.thread_id)
+        hit = self.wait_for_breakpoint_hit('108')
 
-        self.write_run_thread(thread_id)
+        self.write_run_thread(hit.thread_id)
         self.finished_ok = True
 
 class WriterThreadPerformance4(PerformanceWriterThread):
