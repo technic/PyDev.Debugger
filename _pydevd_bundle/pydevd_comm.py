@@ -909,12 +909,9 @@ class NetCommandFactory:
             if topmost_frame is not None:
                 try:
                     frame = topmost_frame
+                    topmost_frame = None
                     while frame is not None:
-                        if (
-                                frame.f_code.co_name == 'handle_exception' and frame.f_code.co_filename.endswith('pydevd_frame.py')
-                            ) or (
-                                frame.f_code.co_name == 'stop_on_unhandled_exception' and frame.f_code.co_filename.endswith('pydevd.py')
-                            ):
+                        if frame.f_code.co_name == 'do_wait_suspend' and frame.f_code.co_filename.endswith('pydevd.py'):
                             arg = frame.f_locals.get('arg', None)
                             if arg is not None:
                                 exc_type, exc_desc, _thread_suspend_str, thread_stack_str = self._make_send_curr_exception_trace_str(
@@ -923,12 +920,12 @@ class NetCommandFactory:
                                 cmd_text.append('exc_desc="%s" ' % (exc_desc,))
                                 cmd_text.append('>')
                                 cmd_text.append(thread_stack_str)
-                            break
+                                break
                         frame = frame.f_back
                     else:
                         cmd_text.append('>')
                 finally:
-                    topmost_frame = None
+                    frame = None
             cmd_text.append('</thread></xml>')
             return NetCommand(CMD_GET_EXCEPTION_DETAILS, seq, ''.join(cmd_text))
         except:

@@ -961,7 +961,10 @@ class WriterThreadCaseUnhandledExceptionsBasic(debugger_unittest.AbstractWriterT
             self.write_get_current_exception(hit.thread_id)
             msg = self.wait_for_message(accept_message=lambda msg:exc_type in msg and 'exc_type="' in msg and 'exc_desc="' in msg, unquote_msg=False)
             assert unquote(msg.thread['exc_desc']) == exc_desc
-            assert unquote(msg.thread['exc_type']) == "&lt;type 'exceptions.%s'&gt;" % (exc_type,)
+            assert unquote(msg.thread['exc_type']) in (
+                "&lt;type 'exceptions.%s'&gt;" % (exc_type,),  # py2 
+                "&lt;class '%s'&gt;" % (exc_type,)  # py3
+            )
             if len(msg.thread.frame) == 0:
                 assert unquote(unquote(msg.thread.frame['file'])).endswith('_debugger_case_unhandled_exceptions.py')
             else:
@@ -1764,7 +1767,11 @@ class WriterThreadCaseHandledExceptions1(debugger_unittest.AbstractWriterThread)
             self.write_get_current_exception(hit.thread_id)
             msg = self.wait_for_message(accept_message=lambda msg:'IndexError' in msg and 'exc_type="' in msg and 'exc_desc="' in msg, unquote_msg=False)
             assert msg.thread['exc_desc'] == 'foo'
-            assert unquote(msg.thread['exc_type']) == "&lt;type 'exceptions.IndexError'&gt;"
+            assert unquote(msg.thread['exc_type']) in (
+                "&lt;type 'exceptions.IndexError'&gt;",  # py2 
+                "&lt;class 'IndexError'&gt;"  # py3
+            )
+
             assert unquote(unquote(msg.thread.frame[0]['file'])).endswith('_debugger_case_exceptions.py')
             self.write_run_thread(hit.thread_id)
 
