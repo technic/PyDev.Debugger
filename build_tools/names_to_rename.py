@@ -315,4 +315,15 @@ NAMES = '''
 # setUpModule -- skip
 # tearDown -- skip
 
+# defaultResolver
+# dictResolver
+# tupleResolver
+# instanceResolver
+# jyArrayResolver
+# setResolver
+# multiValueDictResolver
+# djangoFormResolver
+# dequeResolver
+# orderedDictResolver
+# frameResolver
 '''

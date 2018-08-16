@@ -40,9 +40,9 @@ def _create_default_type_map():
             (float, None),
             (complex, None),
             (str, None),
-            (tuple, pydevd_resolver.tupleResolver),
-            (list, pydevd_resolver.tupleResolver),
-            (dict, pydevd_resolver.dictResolver),
+            (tuple, pydevd_resolver.tuple_resolver),
+            (list, pydevd_resolver.tuple_resolver),
+            (dict, pydevd_resolver.dict_resolver),
         ]
         try:
             default_type_map.append((long, None))  # @UndefinedVariable
@@ -55,37 +55,37 @@ def _create_default_type_map():
             pass  # not available on all python versions
 
         try:
-            default_type_map.append((set, pydevd_resolver.setResolver))
+            default_type_map.append((set, pydevd_resolver.set_resolver))
         except:
             pass  # not available on all python versions
 
         try:
-            default_type_map.append((frozenset, pydevd_resolver.setResolver))
+            default_type_map.append((frozenset, pydevd_resolver.set_resolver))
         except:
             pass  # not available on all python versions
 
         try:
             from django.utils.datastructures import MultiValueDict
-            default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
+            default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multi_value_dict_resolver))
             # we should put it before dict
         except:
             pass  # django may not be installed
 
         try:
             from django.forms import BaseForm
-            default_type_map.insert(0, (BaseForm, pydevd_resolver.djangoFormResolver))
+            default_type_map.insert(0, (BaseForm, pydevd_resolver.django_form_resolver))
             # we should put it before instance resolver
         except:
             pass  # django may not be installed
 
         try:
             from collections import deque
-            default_type_map.append((deque, pydevd_resolver.dequeResolver))
+            default_type_map.append((deque, pydevd_resolver.deque_resolver))
         except:
             pass
 
         if frame_type is not None:
-            default_type_map.append((frame_type, pydevd_resolver.frameResolver))
+            default_type_map.append((frame_type, pydevd_resolver.frame_resolver))
 
     else:
         from org.python import core  # @UnresolvedImport
@@ -96,14 +96,14 @@ def _create_default_type_map():
             (core.PyFloat, None),
             (core.PyComplex, None),
             (core.PyString, None),
-            (core.PyTuple, pydevd_resolver.tupleResolver),
-            (core.PyList, pydevd_resolver.tupleResolver),
-            (core.PyDictionary, pydevd_resolver.dictResolver),
-            (core.PyStringMap, pydevd_resolver.dictResolver),
+            (core.PyTuple, pydevd_resolver.tuple_resolver),
+            (core.PyList, pydevd_resolver.tuple_resolver),
+            (core.PyDictionary, pydevd_resolver.dict_resolver),
+            (core.PyStringMap, pydevd_resolver.dict_resolver),
         ]
         if hasattr(core, 'PyJavaInstance'):
             # Jython 2.5b3 removed it.
-            default_type_map.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
+            default_type_map.append((core.PyJavaInstance, pydevd_resolver.instance_resolver))
 
     return default_type_map
 
@@ -165,7 +165,7 @@ class TypeResolveHandler(object):
             traceback.print_exc()
 
         # No match return default (and cache it).
-        resolver = pydevd_resolver.defaultResolver
+        resolver = pydevd_resolver.default_resolver
         self._type_to_resolver_cache[type_object] = resolver
         return type_object, type_name, resolver
 
@@ -174,10 +174,10 @@ class TypeResolveHandler(object):
 
         def _get_type(self, o, type_object, type_name):
             if type_name == 'org.python.core.PyJavaInstance':
-                return type_object, type_name, pydevd_resolver.instanceResolver
+                return type_object, type_name, pydevd_resolver.instance_resolver
 
             if type_name == 'org.python.core.PyArray':
-                return type_object, type_name, pydevd_resolver.jyArrayResolver
+                return type_object, type_name, pydevd_resolver.jy_array_resolver
 
             return self._base_get_type(o, type_name, type_name)
 
@@ -296,7 +296,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
                 value = str_from_provider
             elif hasattr(v, '__class__'):
                 if v.__class__ == frame_type:
-                    value = pydevd_resolver.frameResolver.get_frame_name(v)
+                    value = pydevd_resolver.frame_resolver.get_frame_name(v)
 
                 elif v.__class__ in (list, tuple):
                     if len(v) > 300:

@@ -1652,7 +1652,7 @@ class InternalLoadFullValue(InternalThreadCommand):
                     else:
                         scope, attrs = (variable, None)
                         name = scope
-                    var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
+                    var_obj = pydevd_vars.get_variable(self.thread_id, self.frame_id, scope, attrs)
                     var_objects.append((var_obj, name))
 
             t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects)

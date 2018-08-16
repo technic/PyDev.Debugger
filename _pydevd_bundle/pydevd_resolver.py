@@ -238,7 +238,7 @@ class DictResolver:
 
         ret['__len__'] = len(dict)
         # in case if the class extends built-in type and has some additional fields
-        additional_fields = defaultResolver.get_dictionary(dict)
+        additional_fields = default_resolver.get_dictionary(dict)
         ret.update(additional_fields)
         return ret
 
@@ -277,7 +277,7 @@ class TupleResolver: #to enumerate tuples and lists
                 
         d['__len__'] = len(var)
         # in case if the class extends built-in type and has some additional fields
-        additional_fields = defaultResolver.get_dictionary(var)
+        additional_fields = default_resolver.get_dictionary(var)
         d.update(additional_fields)
         return d
 
@@ -320,7 +320,7 @@ class SetResolver:
             
         d['__len__'] = len(var)
         # in case if the class extends built-in type and has some additional fields
-        additional_fields = defaultResolver.get_dictionary(var)
+        additional_fields = default_resolver.get_dictionary(var)
         d.update(additional_fields)
         return d
 
@@ -414,7 +414,7 @@ class DjangoFormResolver(DefaultResolver):
 
     def get_dictionary(self, var, names=None):
         # Do not call self.errors because it is property and has side effects
-        d = defaultResolver.get_dictionary(var, self.get_names(var))
+        d = default_resolver.get_dictionary(var, self.get_names(var))
         if self.has_errors_attr:
             try:
                 errors_attr = getattr(var, "_errors")
@@ -452,7 +452,7 @@ class FrameResolver:
 
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
-            return defaultResolver.get_dictionary(obj)
+            return default_resolver.get_dictionary(obj)
 
         if attribute == 'stack':
             return self.get_frame_stack(obj)
@@ -465,7 +465,7 @@ class FrameResolver:
 
     def get_dictionary(self, obj):
         ret = {}
-        ret['__internals__'] = defaultResolver.get_dictionary(obj)
+        ret['__internals__'] = default_resolver.get_dictionary(obj)
         ret['stack'] = self.get_frame_stack(obj)
         ret['f_locals'] = obj.f_locals
         return ret
@@ -492,14 +492,14 @@ class FrameResolver:
             return 'frame object'
 
 
-defaultResolver = DefaultResolver()
-dictResolver = DictResolver()
-tupleResolver = TupleResolver()
-instanceResolver = InstanceResolver()
-jyArrayResolver = JyArrayResolver()
-setResolver = SetResolver()
-multiValueDictResolver = MultiValueDictResolver()
-djangoFormResolver = DjangoFormResolver()
-dequeResolver = DequeResolver()
-orderedDictResolver = OrderedDictResolver()
-frameResolver = FrameResolver()
+default_resolver = DefaultResolver()
+dict_resolver = DictResolver()
+tuple_resolver = TupleResolver()
+instance_resolver = InstanceResolver()
+jy_array_resolver = JyArrayResolver()
+set_resolver = SetResolver()
+multi_value_dict_resolver = MultiValueDictResolver()
+django_form_resolver = DjangoFormResolver()
+deque_resolver = DequeResolver()
+ordered_dict_resolver = OrderedDictResolver()
+frame_resolver = FrameResolver()

@@ -158,7 +158,7 @@ def find_frame(thread_id, frame_id):
         return None
 
 
-def getVariable(thread_id, frame_id, scope, attrs):
+def get_variable(thread_id, frame_id, scope, attrs):
     """
     returns the value of a variable
 
@@ -174,7 +174,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
     """
     if scope == 'BY_ID':
         if thread_id != get_thread_id(threading.currentThread()):
-            raise VariableError("getVariable: must execute on same thread")
+            raise VariableError("get_variable: must execute on same thread")
 
         try:
             import gc
@@ -246,7 +246,7 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :return: a dictionary of variables's fields
     """
 
-    var = getVariable(thread_id, frame_id, scope, attrs)
+    var = get_variable(thread_id, frame_id, scope, attrs)
 
     try:
         _type, _typeName, resolver = get_type(var)
@@ -303,7 +303,7 @@ def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, ope
     code_or_file: either some code (i.e.: from pprint import pprint) or a file to be executed.
     operation_fn_name: the name of the operation to execute after the exec (i.e.: pprint)
     """
-    expressionValue = getVariable(thread_id, frame_id, scope, attrs)
+    expressionValue = get_variable(thread_id, frame_id, scope, attrs)
 
     try:
         namespace = {'__name__': '<custom_operation>'}

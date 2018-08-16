@@ -1,5 +1,5 @@
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider
-from _pydevd_bundle.pydevd_resolver import defaultResolver, MAX_ITEMS_TO_HANDLE, TOO_LARGE_ATTR, TOO_LARGE_MSG
+from _pydevd_bundle.pydevd_resolver import default_resolver, MAX_ITEMS_TO_HANDLE, TOO_LARGE_ATTR, TOO_LARGE_MSG
 from .pydevd_helpers import find_mod_attr
 
 
@@ -28,7 +28,7 @@ class NDArrayTypeResolveProvider(object):
 
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
-            return defaultResolver.get_dictionary(obj)
+            return default_resolver.get_dictionary(obj)
         if attribute == 'min':
             if self.is_numeric(obj) and obj.size > 0:
                 return obj.min()
@@ -60,7 +60,7 @@ class NDArrayTypeResolveProvider(object):
 
     def get_dictionary(self, obj):
         ret = dict()
-        ret['__internals__'] = defaultResolver.get_dictionary(obj)
+        ret['__internals__'] = default_resolver.get_dictionary(obj)
         if obj.size > 1024 * 1024:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
             ret['max'] = 'ndarray too big, calculating max would slow down debugging'
