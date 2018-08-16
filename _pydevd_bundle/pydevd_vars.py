@@ -303,7 +303,7 @@ def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, ope
     code_or_file: either some code (i.e.: from pprint import pprint) or a file to be executed.
     operation_fn_name: the name of the operation to execute after the exec (i.e.: pprint)
     """
-    expressionValue = get_variable(thread_id, frame_id, scope, attrs)
+    expression_value = get_variable(thread_id, frame_id, scope, attrs)
 
     try:
         namespace = {'__name__': '<custom_operation>'}
@@ -314,7 +314,7 @@ def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, ope
             namespace['__file__'] = '<customOperationCode>'
             Exec(code_or_file, namespace, namespace)
 
-        return str(namespace[operation_fn_name](expressionValue))
+        return str(namespace[operation_fn_name](expression_value))
     except:
         traceback.print_exc()
 
