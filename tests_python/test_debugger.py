@@ -12,18 +12,18 @@ import time
 
 import pytest
 
+from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 from tests_python import debugger_unittest
+from tests_python.debug_constants import TEST_CYTHON
 from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
     REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
     CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
-    IS_APPVEYOR)
-from _pydevd_bundle.pydevd_constants import IS_WINDOWS
+    IS_APPVEYOR, builtin_qualifier, IS_PY36, IS_PY26)
+
 try:
     from urllib import unquote
 except ImportError:
     from urllib.parse import unquote
-
-from tests_python.debug_constants import TEST_CYTHON
 
 pytest_plugins = [
     str('tests_python.debugger_fixtures'),
@@ -42,21 +42,6 @@ if sys.version_info[:2] == (2, 7):
         TEST_DJANGO = True
     except:
         pass
-
-IS_PY2 = False
-if sys.version_info[0] == 2:
-    IS_PY2 = True
-
-IS_PY26 = sys.version_info[:2] == (2, 6)
-
-if IS_PY2:
-    builtin_qualifier = "__builtin__"
-else:
-    builtin_qualifier = "builtins"
-
-IS_PY36 = False
-if sys.version_info[0] == 3 and sys.version_info[1] == 6:
-    IS_PY36 = True
 
 
 @pytest.mark.skipif(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
@@ -1199,67 +1184,6 @@ def test_case_get_next_statement_targets(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_IRONPYTHON or IS_JYTHON, reason='Failing on IronPython and Jython (needs to be investigated).')
-def test_case_type_ext(case_setup):
-    # Custom type presentation extensions
-
-    def get_environ(self):
-        env = os.environ.copy()
-
-        python_path = env.get("PYTHONPATH", "")
-        ext_base = debugger_unittest._get_debugger_test_file('my_extensions')
-        env['PYTHONPATH'] = ext_base + os.pathsep + python_path  if python_path else ext_base
-        return env
-
-    with case_setup.test_file('_debugger_case_type_ext.py', get_environ=get_environ) as writer:
-        writer.get_environ = get_environ
-
-        writer.write_add_breakpoint(7, None)
-        writer.write_make_initial_run()
-
-        hit = writer.wait_for_breakpoint_hit('111')
-        writer.write_get_frame(hit.thread_id, hit.frame_id)
-        assert writer.wait_for_var([
-            [
-                r'<var name="my_rect" type="Rect" qualifier="__main__" value="Rectangle%255BLength%253A 5%252C Width%253A 10 %252C Area%253A 50%255D" isContainer="True" />',
-                r'<var name="my_rect" type="Rect"  value="Rect: <__main__.Rect object at',  # Jython
-            ]
-        ])
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'my_rect')
-        assert writer.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="int%253A 50" />'.format(builtin_qualifier))
-        writer.write_run_thread(hit.thread_id)
-        writer.finished_ok = True
-
-
-@pytest.mark.skipif(IS_IRONPYTHON or IS_JYTHON, reason='Failing on IronPython and Jython (needs to be investigated).')
-def test_case_event_ext(case_setup):
-
-    def get_environ(self):
-        env = os.environ.copy()
-
-        python_path = env.get("PYTHONPATH", "")
-        ext_base = debugger_unittest._get_debugger_test_file('my_extensions')
-        env['PYTHONPATH'] = ext_base + os.pathsep + python_path  if python_path else ext_base
-        env["VERIFY_EVENT_TEST"] = "1"
-        return env
-
-    # Test initialize event for extensions
-    with case_setup.test_file('_debugger_case_event_ext.py', get_environ=get_environ) as writer:
-
-        original_additional_output_checks = writer.additional_output_checks
-
-        @overrides(writer.additional_output_checks)
-        def additional_output_checks(stdout, stderr):
-            original_additional_output_checks(stdout, stderr)
-            if 'INITIALIZE EVENT RECEIVED' not in stdout:
-                raise AssertionError('No initialize event received')
-
-        writer.additional_output_checks = additional_output_checks
-
-        writer.write_make_initial_run()
-        writer.finished_ok = True
-
-
 @pytest.mark.skipif(IS_JYTHON, reason='Jython does not seem to be creating thread started inside tracing (investigate).')
 def test_case_writer_creation_deadlock(case_setup):
     # check case where there was a deadlock evaluating expressions
@@ -1878,7 +1802,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.log.append('asserted')
 
         writer.finished_ok = True
-        
+
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
@@ -1886,7 +1810,7 @@ def test_py_37_breakpoint_remote(case_setup_remote):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            REASON_THREAD_SUSPEND, 
+            REASON_THREAD_SUSPEND,
             filename='_debugger_case_breakpoint_remote.py',
             line=13,
         )
@@ -1902,8 +1826,10 @@ def test_py_37_breakpoint_remote(case_setup_remote):
 
         writer.finished_ok = True
 
+
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_py_37_breakpoint_remote_no_import(case_setup_remote):
+
     def get_environ(writer):
         env = os.environ.copy()
         curr_pythonpath = env.get('PYTHONPATH', '')
@@ -1922,7 +1848,7 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            "108", 
+            "108",
             filename='_debugger_case_breakpoint_remote_no_import.py',
             line=12,
         )
@@ -1937,6 +1863,7 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
         writer.log.append('asserted')
 
         writer.finished_ok = True
+
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_remote_debugger_multi_proc(case_setup_remote):

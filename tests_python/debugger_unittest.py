@@ -101,6 +101,21 @@ IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
 IS_JYTHON = platform.python_implementation() == 'Jython'
 IS_APPVEYOR = os.environ.get('APPVEYOR', '') in ('True', 'true', '1')
 
+IS_PY2 = False
+if sys.version_info[0] == 2:
+    IS_PY2 = True
+
+IS_PY26 = sys.version_info[:2] == (2, 6)
+
+IS_PY36 = False
+if sys.version_info[0] == 3 and sys.version_info[1] == 6:
+    IS_PY36 = True
+
+if IS_PY2:
+    builtin_qualifier = "__builtin__"
+else:
+    builtin_qualifier = "builtins"
+
 try:
     from thread import start_new_thread
 except ImportError:
