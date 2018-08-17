@@ -186,8 +186,8 @@ def get_variable(thread_id, frame_id, scope, attrs):
             for var in objects:
                 if id(var) == frame_id:
                     if attrs is not None:
-                        attrList = attrs.split('\t')
-                        for k in attrList:
+                        attr_list = attrs.split('\t')
+                        for k in attr_list:
                             _type, _typeName, resolver = get_type(var)
                             var = resolver.resolve(var, k)
 
@@ -202,32 +202,32 @@ def get_variable(thread_id, frame_id, scope, attrs):
         return {}
 
     if attrs is not None:
-        attrList = attrs.split('\t')
+        attr_list = attrs.split('\t')
     else:
-        attrList = []
+        attr_list = []
 
-    for attr in attrList:
+    for attr in attr_list:
         attr.replace("@_@TAB_CHAR@_@", '\t')
 
     if scope == 'EXPRESSION':
-        for count in xrange(len(attrList)):
+        for count in xrange(len(attr_list)):
             if count == 0:
                 # An Expression can be in any scope (globals/locals), therefore it needs to evaluated as an expression
-                var = evaluate_expression(thread_id, frame_id, attrList[count], False)
+                var = evaluate_expression(thread_id, frame_id, attr_list[count], False)
             else:
                 _type, _typeName, resolver = get_type(var)
-                var = resolver.resolve(var, attrList[count])
+                var = resolver.resolve(var, attr_list[count])
     else:
         if scope == "GLOBAL":
             var = frame.f_globals
-            del attrList[0]  # globals are special, and they get a single dummy unused attribute
+            del attr_list[0]  # globals are special, and they get a single dummy unused attribute
         else:
             # in a frame access both locals and globals as Python does
             var = {}
             var.update(frame.f_globals)
             var.update(frame.f_locals)
 
-        for k in attrList:
+        for k in attr_list:
             _type, _typeName, resolver = get_type(var)
             var = resolver.resolve(var, k)
 

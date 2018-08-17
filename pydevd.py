@@ -567,8 +567,10 @@ class PyDB:
                 curr_thread_id = None
                 for thread_id in program_threads_alive:
                     queue = self.get_internal_queue(thread_id)
-                    cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
-                                        # we will re-add the commands to the queue after executing.
+                    
+                    # some commands must be processed by the thread itself... if that's the case,
+                    # we will put back the commands to the queue after executing.
+                    cmds_to_put_back = []  
                     try:
                         while True:
                             int_cmd = queue.get(False)
@@ -591,12 +593,12 @@ class PyDB:
                                 int_cmd.do_it(self)
                             else:
                                 pydevd_log(2, "NOT processing internal command ", str(int_cmd))
-                                cmdsToReadd.append(int_cmd)
+                                cmds_to_put_back.append(int_cmd)
 
 
                     except _queue.Empty: #@UndefinedVariable
                         # this is how we exit
-                        for int_cmd in cmdsToReadd:
+                        for int_cmd in cmds_to_put_back:
                             queue.put(int_cmd)
 
     def disable_tracing_while_running_if_frame_eval(self):
