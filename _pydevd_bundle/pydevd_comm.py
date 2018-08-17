@@ -185,6 +185,10 @@ CMD_STOP_ON_START = 154
 # When the debugger is stopped in an exception, this command will provide the details of the current exception (in the current thread).
 CMD_GET_EXCEPTION_DETAILS = 155
 
+CMD_GET_SCOPES_JSON = 156
+
+CMD_GET_VARIABLES_JSON = 157
+
 CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
 CMD_SET_PROJECT_ROOTS = 202
@@ -251,6 +255,9 @@ ID_TO_MEANING = {
     '153': 'CMD_THREAD_DUMP_TO_STDERR',
     '154': 'CMD_STOP_ON_START',
     '155': 'CMD_GET_EXCEPTION_DETAILS',
+    
+    '156': 'CMD_GET_SCOPES_JSON',
+    '157': 'CMD_GET_VARIABLES_JSON',
 
     '200': 'CMD_REDIRECT_OUTPUT',
     '201': 'CMD_GET_NEXT_STATEMENT_TARGETS',
@@ -1266,6 +1273,79 @@ class InternalGetFrame(InternalThreadCommand):
         except:
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
             dbg.writer.add_command(cmd)
+
+#=======================================================================================================================
+# InternalGetScopesJson
+#=======================================================================================================================
+class InternalGetScopesJson(InternalThreadCommand):
+
+    def __init__(self, seq, thread_id, frame_id):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        
+    def process_command_with_memo(self, dbg, suspended_frame_memo):
+        """ Converts request into python variable """
+        if suspended_frame_memo is None:
+            # Can only be processed if the suspended_frame_memo is available.
+            return False
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            if frame is not None:
+                raise AssertionError('TODO: Provide a Scope: with proper variablesReference, namedVariables and indexedVariables')
+            else:
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, "Frame not found: %s from thread: %s" % (self.frame_id, self.thread_id))
+                dbg.writer.add_command(cmd)
+        except:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
+            dbg.writer.add_command(cmd)
+        return True
+
+
+#=======================================================================================================================
+# InternalGetVariablesJson
+#=======================================================================================================================
+class InternalGetVariablesJson(InternalThreadCommand):
+    """ gets the value of a variable """
+    def __init__(self, seq, thread_id, frame_id, variable_id):
+        '''
+        :param variable_id:
+            The reference to the variable which should be gotten (InternalGetScopesJson should've
+            been used to get the scopes for a frame).
+        '''
+        raise AssertionError('TODO: This should work with the arguments from VariablesArguments.')
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.variable_id = variable_id
+
+    def do_it(self, dbg):
+        raise AssertionError('This method should not be called when process_command_with_memo is available.')
+
+    def process_command_with_memo(self, dbg, suspended_frame_memo):
+        """ Converts request into python variable """
+        if suspended_frame_memo is None:
+            # Can only be processed if the suspended_frame_memo is available.
+            return False
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            if frame is not None:
+                hidden_ns = pydevconsole.get_ipython_hidden_vars()
+                xml = "<xml>"
+                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
+                del frame
+                xml += "</xml>"
+                cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)
+                dbg.writer.add_command(cmd)
+            else:
+                #pydevd_vars.dump_frames(self.thread_id)
+                #don't print this error: frame not found: means that the client is not synchronized (but that's ok)
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, "Frame not found: %s from thread: %s" % (self.frame_id, self.thread_id))
+                dbg.writer.add_command(cmd)
+        except:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
+            dbg.writer.add_command(cmd)
+        return True
 
 #=======================================================================================================================
 # InternalGetNextStatementTargets

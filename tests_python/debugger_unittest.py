@@ -75,6 +75,8 @@ CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose err
 CMD_STOP_ON_START = 154
 CMD_GET_EXCEPTION_DETAILS = 155
 
+CMD_GET_VARIABLES_JSON = 156
+
 CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
 CMD_SET_PROJECT_ROOTS = 202
@@ -834,6 +836,12 @@ class AbstractWriterThread(threading.Thread):
 
     def write_get_variable(self, thread_id, frame_id, var_attrs):
         self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, var_attrs))
+
+    def write_tab_separated(self, tup):
+        self.write('\t'.join(str(x) for x in tup))
+
+    def write_get_variables_json(self, thread_id, frame_id, variable_id=0):
+        self.write_tab_separated((CMD_GET_VARIABLES_JSON, self.next_seq(), thread_id, frame_id, variable_id))
 
     def write_step_over(self, thread_id):
         self.write("%s\t%s\t%s" % (CMD_STEP_OVER, self.next_seq(), thread_id,))

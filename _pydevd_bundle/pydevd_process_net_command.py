@@ -20,7 +20,8 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
     CMD_LOAD_FULL_VALUE, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, \
-    CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS
+    CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS,\
+    CMD_GET_SCOPES_JSON, CMD_GET_VARIABLES_JSON, InternalGetScopesJson
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR, IS_WINDOWS
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -40,6 +41,7 @@ def process_net_command(py_db, cmd_id, seq, text):
     it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
     probably will give better performance).
     '''
+    from _pydevd_bundle.pydevd_comm import InternalGetVariablesJson
     # print(ID_TO_MEANING[str(cmd_id)], repr(text))
 
     py_db._main_lock.acquire()
@@ -271,6 +273,20 @@ def process_net_command(py_db, cmd_id, seq, text):
                 thread_id, frame_id, scope = text.split('\t', 2)
 
                 int_cmd = InternalGetFrame(seq, thread_id, frame_id)
+                py_db.post_internal_command(int_cmd, thread_id)
+                
+            elif cmd_id == CMD_GET_SCOPES_JSON:
+                # Custom command to get scopes in json format as expected by the debug adapter protocol
+                thread_id, frame_id = text.split('\t', 1)
+
+                int_cmd = InternalGetScopesJson(seq, thread_id, frame_id)
+                py_db.post_internal_command(int_cmd, thread_id)
+                
+            elif cmd_id == CMD_GET_VARIABLES_JSON:
+                # Custom command to get variables in json format using references.
+                thread_id, frame_id, variable_id = text.split('\t', 2)
+
+                int_cmd = InternalGetVariablesJson(seq, thread_id, frame_id, variable_id)
                 py_db.post_internal_command(int_cmd, thread_id)
 
             elif cmd_id == CMD_SET_BREAK:

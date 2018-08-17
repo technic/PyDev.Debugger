@@ -505,7 +505,7 @@ class PyDB:
 
         self.writer.add_command(self.cmd_factory.make_thread_killed_message(thread_id))
 
-    def process_internal_commands(self):
+    def process_internal_commands(self, suspended_frame_memo=None):
         '''This function processes internal commands
         '''
         with self._main_lock:
@@ -590,7 +590,12 @@ class PyDB:
 
                             if int_cmd.can_be_executed_by(curr_thread_id):
                                 pydevd_log(2, "processing internal command ", str(int_cmd))
-                                int_cmd.do_it(self)
+                                if hasattr(int_cmd, 'process_command_with_memo'):
+                                    if not int_cmd.process_command_with_memo(self, suspended_frame_memo):
+                                        pydevd_log(2, "Internal command not processed ", str(int_cmd))
+                                        cmds_to_put_back.append(int_cmd)
+                                else:
+                                    int_cmd.do_it(self)
                             else:
                                 pydevd_log(2, "NOT processing internal command ", str(int_cmd))
                                 cmds_to_put_back.append(int_cmd)
@@ -788,7 +793,10 @@ class PyDB:
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
         """
-        self.process_internal_commands()
+        # Create a place where commands may store frame related info while the thread is suspneded.
+        suspended_frame_memo = {}
+        
+        self.process_internal_commands(suspended_frame_memo)
         thread_stack_str = ''   # @UnusedVariable -- this is here so that `make_get_thread_stack_message`
                                 # can retrieve it later.
         
@@ -820,7 +828,7 @@ class PyDB:
                 # call input hooks if only matplotlib is in use
                 self._call_mpl_hook()
 
-            self.process_internal_commands()
+            self.process_internal_commands(suspended_frame_memo)
             time.sleep(0.01)
 
         self.cancel_async_evaluation(get_thread_id(thread), str(id(frame)))
