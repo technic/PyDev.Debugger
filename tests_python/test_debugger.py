@@ -18,7 +18,7 @@ from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGH
     CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
     IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
     CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
-    CMD_THREAD_RESUME_SINGLE_NOTIFICATION)
+    CMD_THREAD_RESUME_SINGLE_NOTIFICATION, REASON_STEP_INTO)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 try:
     from urllib import unquote
@@ -177,7 +177,7 @@ def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_ex
 
         writer.write_suspend_on_breakpoint_exception(skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception)
         breakpoint_id = writer.write_add_breakpoint(
-            writer.get_line_index_with_content('break here'), 'Call', condition='i > 5')
+            writer.line_index('break here'), 'Call', condition='i > 5')
 
         writer.write_make_initial_run()
 
@@ -942,7 +942,7 @@ def _has_qt():
 @pytest.mark.skipif(not _has_qt(), reason='No qt available')
 def test_case_qthread1(case_setup):
     with case_setup.test_file('_debugger_case_qthread1.py') as writer:
-        breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'run')
+        breakpoint_id = writer.write_add_breakpoint(writer.line_index('break here'), 'run')
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit()
@@ -960,7 +960,7 @@ def test_case_qthread1(case_setup):
 @pytest.mark.skipif(not _has_qt(), reason='No qt available')
 def test_case_qthread2(case_setup):
     with case_setup.test_file('_debugger_case_qthread2.py') as writer:
-        breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'long_running')
+        breakpoint_id = writer.write_add_breakpoint(writer.line_index('break here'), 'long_running')
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit()
@@ -979,7 +979,7 @@ def test_case_qthread2(case_setup):
 @pytest.mark.skipif(not _has_qt(), reason='No qt available')
 def test_case_qthread3(case_setup):
     with case_setup.test_file('_debugger_case_qthread3.py') as writer:
-        breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'run')
+        breakpoint_id = writer.write_add_breakpoint(writer.line_index('break here'), 'run')
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit()
@@ -1321,7 +1321,7 @@ def test_unhandled_exceptions_get_stack(case_setup_unhandled_exceptions):
 
         assert len(msg.thread.frame) == 0  # No back frames (stopped in main).
         assert msg.thread.frame['name'] == '<module>'
-        assert msg.thread.frame['line'] == str(writer.get_line_index_with_content('break line on unhandled exception'))
+        assert msg.thread.frame['line'] == str(writer.line_index('break line on unhandled exception'))
 
         writer.write_run_thread(hit.thread_id)
 
@@ -1791,7 +1791,7 @@ def test_case_print(case_setup):
 @pytest.mark.skipif(IS_JYTHON, reason='Not working on Jython (needs to be investigated).')
 def test_case_lamdda(case_setup):
     with case_setup.test_file('_debugger_case_lamda.py') as writer:
-        writer.write_add_breakpoint(writer.get_line_index_with_content('Break here'), 'None')
+        writer.write_add_breakpoint(writer.line_index('Break here'), 'None')
         writer.write_make_initial_run()
 
         for _ in range(3):  # We'll hit the same breakpoint 3 times.
@@ -1936,6 +1936,36 @@ def test_py_37_breakpoint(case_setup, filename):
 
         hit = writer.wait_for_breakpoint_hit(file=filename, line=3)
 
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
+def test_stepping(case_setup):
+    resources_stepping = os.path.join(os.path.dirname(__file__), 'resources_stepping')
+    site_packages_dir = os.path.join(resources_stepping, 'site-packages')
+    project_dir = os.path.join(resources_stepping, 'project')
+    project_filename = os.path.join(project_dir, 'file_on_project.py')
+
+    with case_setup.test_file(project_filename) as writer:
+        writer.write_add_breakpoint(writer.line_index('break here'), 'None')
+        writer.write_set_project_roots([project_dir])
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, file='file_on_project.py')
+        writer.write_step_over(hit.thread_id)
+
+        # Regular step over
+        hit = writer.wait_for_breakpoint_hit(REASON_STEP_INTO, file='file_on_site_packages.py')
+        writer.write_run_thread(hit.thread_id)
+
+        writer.write_set_default_step_my_code()
+
+        # Step over > into my code
+        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, file='file_on_project.py')
+        writer.write_step_over(hit.thread_id)
+
+        hit = writer.wait_for_breakpoint_hit(REASON_STEP_INTO_MY_CODE, file='file_on_project.py')
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True

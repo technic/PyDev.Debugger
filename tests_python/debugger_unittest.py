@@ -95,6 +95,7 @@ REASON_CAUGHT_EXCEPTION = CMD_STEP_CAUGHT_EXCEPTION
 REASON_UNCAUGHT_EXCEPTION = CMD_ADD_EXCEPTION_BREAK
 REASON_STOP_ON_BREAKPOINT = CMD_SET_BREAK
 REASON_THREAD_SUSPEND = CMD_THREAD_SUSPEND
+REASON_STEP_INTO = CMD_STEP_INTO
 REASON_STEP_INTO_MY_CODE = CMD_STEP_INTO_MY_CODE
 REASON_STEP_OVER = CMD_STEP_OVER
 
@@ -202,7 +203,7 @@ class ReaderThread(threading.Thread):
             frame_info = ''
             i = 3
             while frame:
-                stack_msg = ' --  File "%s", line %s, in %s\n' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
+                stack_msg = ' -- File "%s", line %s, in %s\n' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
                 if 'run' == frame.f_code.co_name:
                     frame_info = stack_msg  # Ok, found the writer thread 'run' method (show only that).
                     break
@@ -539,6 +540,8 @@ class AbstractWriterThread(threading.Thread):
                     return i_line + 1
         raise AssertionError('Did not find: %s in %s' % (line_content, self.TEST_FILE))
 
+    line_index = get_line_index_with_content
+
     def get_cwd(self):
         return os.path.dirname(self.get_pydevd_file())
 
@@ -662,6 +665,7 @@ class AbstractWriterThread(threading.Thread):
         # note: those must be passed in kwargs.
         line = kwargs.get('line')
         file = kwargs.get('file')
+        name = kwargs.get('name')
 
         self.log.append('Start: wait_for_breakpoint_hit')
         # wait for hit breakpoint
@@ -675,9 +679,9 @@ class AbstractWriterThread(threading.Thread):
             return False
 
         msg = self.wait_for_message(accept_message, timeout=timeout)
-        return self._get_stack_as_hit(msg, file, line)
+        return self._get_stack_as_hit(msg, file, line, name)
 
-    def _get_stack_as_hit(self, msg, file=None, line=None):
+    def _get_stack_as_hit(self, msg, file=None, line=None, name=None):
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" name="encode" ...
         if len(msg.thread.frame) == 0:
             frame = msg.thread.frame
@@ -686,7 +690,7 @@ class AbstractWriterThread(threading.Thread):
         thread_id = msg.thread['id']
         frame_id = frame['id']
         suspend_type = msg.thread['suspend_type']
-        name = frame['name']
+        frame_name = frame['name']
         frame_line = int(frame['line'])
         frame_file = frame['file']
 
@@ -696,10 +700,13 @@ class AbstractWriterThread(threading.Thread):
         if line is not None:
             assert line == frame_line, 'Expected hit to be in line %s, was: %s' % (line, frame_line)
 
+        if name is not None:
+            assert name == frame_name, 'Expected hit to be in frame with name %s, was: %s' % (name, frame_name)
+
         self.log.append('End(1): wait_for_breakpoint_hit: %s' % (msg.original_xml,))
 
         return Hit(
-            thread_id=thread_id, frame_id=frame_id, line=frame_line, suspend_type=suspend_type, name=name, file=frame_file)
+            thread_id=thread_id, frame_id=frame_id, line=frame_line, suspend_type=suspend_type, name=frame_name, file=frame_file)
 
     def wait_for_get_next_statement_targets(self):
         last = ''
@@ -827,6 +834,11 @@ class AbstractWriterThread(threading.Thread):
         self.write_json_config(dict(
             skip_suspend_on_breakpoint_exception=skip_suspend_on_breakpoint_exception,
             skip_print_breakpoint_exception=skip_print_breakpoint_exception
+        ))
+
+    def write_set_default_step_my_code(self, step_over_my_code=True):
+        self.write_json_config(dict(
+            step_over_my_code=step_over_my_code,
         ))
 
     def write_json_config(self, config_dict):

@@ -418,8 +418,9 @@ class PyDB(object):
         self.remove_return_values_flag = False
         self.redirect_output = False
 
-        # this flag disables frame evaluation even if it's available
-        self.use_frame_eval = True
+        # Any step over given will actually be a step over my code if True
+        self.step_over_my_code = False
+
         self.stop_on_start = False
         
         # If True, pydevd will send a single notification when all threads are suspended/resumed.

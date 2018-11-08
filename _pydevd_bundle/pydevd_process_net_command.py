@@ -812,6 +812,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 #     'skip_suspend_on_breakpoint_exception': [<exception names where we should suspend>],
                 #     'skip_print_breakpoint_exception': [<exception names where we should print>],
                 #     'multi_threads_single_notification': bool,
+                #     'step_over_my_code': bool,
                 # }
                 msg = json.loads(text.strip())
                 if 'skip_suspend_on_breakpoint_exception' in msg:
@@ -824,6 +825,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                     
                 if 'multi_threads_single_notification' in msg:
                     py_db.multi_threads_single_notification = msg['multi_threads_single_notification']
+
+                if 'step_over_my_code' in msg:
+                    py_db.step_over_my_code = msg['step_over_my_code']
 
             elif cmd_id == CMD_GET_EXCEPTION_DETAILS:
                 thread_id = text

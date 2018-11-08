@@ -470,7 +470,10 @@ class PyDBFrame:
                 # CMD_STEP_OVER = 108
                 if stop_frame and stop_frame is not frame and step_cmd == 108 and \
                                 arg[0] in (StopIteration, GeneratorExit) and arg[2] is None:
-                    info.pydev_step_cmd = 107  # CMD_STEP_INTO = 107
+                    if main_debugger.step_over_my_code:
+                        step_cmd = info.pydev_step_cmd = 144  # CMD_STEP_INTO_MY_CODE = 144
+                    else:
+                        step_cmd = info.pydev_step_cmd = 107  # CMD_STEP_INTO = 107
                     info.pydev_step_stop = None
             else:
                 # If we are in single step mode and something causes us to exit the current frame, we need to make sure we break
@@ -481,7 +484,10 @@ class PyDBFrame:
                 # @DontTrace comment.
                 if stop_frame is frame and is_return and step_cmd in (109, 108):  # CMD_STEP_RETURN = 109, CMD_STEP_OVER = 108
                     if not frame.f_code.co_flags & 0x20:  # CO_GENERATOR = 0x20 (inspect.CO_GENERATOR)
-                        info.pydev_step_cmd = 107  # CMD_STEP_INTO = 107
+                        if main_debugger.step_over_my_code:
+                            step_cmd = info.pydev_step_cmd = 144  # CMD_STEP_INTO_MY_CODE = 144
+                        else:
+                            step_cmd = info.pydev_step_cmd = 107  # CMD_STEP_INTO = 107
                         info.pydev_step_stop = None
 
                 breakpoints_for_file = main_debugger.breakpoints.get(filename)
