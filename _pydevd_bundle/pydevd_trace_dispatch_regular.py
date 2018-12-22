@@ -209,7 +209,7 @@ def trace_dispatch(py_db, frame, event, arg):
 #     def __init__(self, tuple args):
 #         self._args = args
 # ELSE
-class TopLevelThreadTracerOnlyUnhandledExceptions:
+class TopLevelThreadTracerOnlyUnhandledExceptions(object):
 
     def __init__(self, args):
         self._args = args
@@ -255,7 +255,7 @@ class TopLevelThreadTracerOnlyUnhandledExceptions:
 #         self._raise_lines = set()
 #         self._last_raise_line = -1
 # ELSE
-class TopLevelThreadTracerNoBackFrame:
+class TopLevelThreadTracerNoBackFrame(object):
     '''
     This tracer is pretty special in that it's dealing with a frame without f_back (i.e.: top frame
     on remote attach or QThread).
@@ -352,7 +352,7 @@ class TopLevelThreadTracerNoBackFrame:
 #     def __init__(self, tuple args):
 #         self._args = args
 # ELSE
-class ThreadTracer:
+class ThreadTracer(object):
 
     def __init__(self, args):
         self._args = args

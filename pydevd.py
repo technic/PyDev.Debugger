@@ -433,6 +433,7 @@ class PyDB(object):
         self._threads_suspended_single_notification = ThreadsSuspendedSingleNotification(self)
 
         self._local_thread_trace_func = threading.local()
+        self.trace_dispatch = partial(_trace_dispatch, self)
 
     def get_thread_local_trace_func(self):
         try:
@@ -1374,7 +1375,6 @@ class PyDB(object):
             self.process_internal_commands()
             time.sleep(0.01)
 
-    trace_dispatch = _trace_dispatch
     frame_eval_func = frame_eval_func
     dummy_trace_dispatch = dummy_trace_dispatch
 

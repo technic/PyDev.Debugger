@@ -23231,7 +23231,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_43TopLevelThreadTracerOnlyU
  *     def __init__(self, tuple args):
  *         self._args = args             # <<<<<<<<<<<<<<
  * # ELSE
- * # class TopLevelThreadTracerOnlyUnhandledExceptions:
+ * # class TopLevelThreadTracerOnlyUnhandledExceptions(object):
  */
   __Pyx_INCREF(__pyx_v_args);
   __Pyx_GIVEREF(__pyx_v_args);
@@ -24182,7 +24182,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_31TopLevelThreadTracerNoBac
  *         self._raise_lines = set()
  *         self._last_raise_line = -1             # <<<<<<<<<<<<<<
  * # ELSE
- * # class TopLevelThreadTracerNoBackFrame:
+ * # class TopLevelThreadTracerNoBackFrame(object):
  */
   __pyx_v_self->_last_raise_line = -1;
 
@@ -26503,7 +26503,7 @@ static int __pyx_pf_14_pydevd_bundle_13pydevd_cython_12ThreadTracer___init__(str
  *     def __init__(self, tuple args):
  *         self._args = args             # <<<<<<<<<<<<<<
  * # ELSE
- * # class ThreadTracer:
+ * # class ThreadTracer(object):
  */
   __Pyx_INCREF(__pyx_v_args);
   __Pyx_GIVEREF(__pyx_v_args);
