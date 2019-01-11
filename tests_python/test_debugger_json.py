@@ -96,6 +96,11 @@ class JsonFacade(object):
         request = pydevd_schema.LaunchRequest(arguments)
         self.wait_for_response(self.write_request(request))
 
+    def write_disconnect(self):
+        arguments = pydevd_schema.DisconnectArguments(terminateDebuggee=False)
+        request = pydevd_schema.DisconnectRequest(arguments)
+        self.wait_for_response(self.write_request(request))
+
 
 @pytest.mark.skipif(IS_JYTHON, reason='Must check why it is failing in Jython.')
 def test_case_json_protocol(case_setup):
@@ -118,7 +123,8 @@ def test_case_json_protocol(case_setup):
         assert len(response.body.threads) == 1
         assert next(iter(response.body.threads))['name'] == 'MainThread'
 
-        writer.write_run_thread(thread_id)
+        # Removes breakpoints and proceeds running.
+        json_facade.write_disconnect()
 
         writer.finished_ok = True
 

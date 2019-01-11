@@ -136,6 +136,16 @@ class _PyDevJsonCommandProcessor(object):
 
         return hit_condition
 
+    def on_disconnect_request(self, py_db, request):
+        '''
+        :param DisconnectRequest request:
+        '''
+        self.api.remove_all_breakpoints(py_db, filename='*')
+        self.api.request_resume_thread(thread_id='*')
+
+        response = pydevd_base_schema.build_response(request)
+        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+
     def on_setbreakpoints_request(self, py_db, request):
         '''
         :param SetBreakpointsRequest request:
