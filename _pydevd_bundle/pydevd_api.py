@@ -284,6 +284,18 @@ class PyDevdAPI(object):
 
         py_db.on_breakpoints_changed()
 
+    def remove_all_breakpoints(self, py_db, filename):
+        '''
+        Removes all the breakpoints from a given file.
+        '''
+        changed = False
+        for file_to_id_to_breakpoint in [
+            py_db.file_to_id_to_line_breakpoint, py_db.file_to_id_to_plugin_breakpoint]:
+            changed = file_to_id_to_breakpoint.pop(filename, None) or changed
+
+        if changed:
+            py_db.on_breakpoints_changed(removed=True)
+
     def remove_breakpoint(self, py_db, filename, breakpoint_type, breakpoint_id):
         '''
         :param str filename:
