@@ -1,4 +1,5 @@
 import sys
+import platform
 try:
     import urllib
     urllib.unquote  # noqa
