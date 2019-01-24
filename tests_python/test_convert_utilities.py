@@ -146,6 +146,7 @@ def test_to_server_and_to_client(tmpdir):
                     ('c:/foo', '/báéíóúr'),
                     ('c:/foo/', '/báéíóúr'),
                     ('c:/foo/', '/báéíóúr/'),
+                    ('c:\\foo\\', '/báéíóúr/'),
                 ]):
 
                 PATHS_FROM_ECLIPSE_TO_PYTHON = [
