@@ -6,7 +6,6 @@ from _pydevd_bundle import pydevd_vars
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 
-
 class Jinja2LineBreakpoint(LineBreakpoint):
 
     def __init__(self, file, line, condition, func_name, expression, hit_condition=None, is_logpoint=False):
@@ -30,7 +29,6 @@ def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, f
         return result
     return result
 
-
 def add_exception_breakpoint(plugin, pydb, type, exception):
     if type == 'jinja2':
         if not hasattr(pydb, 'jinja2_exception_break'):
@@ -39,11 +37,9 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         return True
     return False
 
-
 def _init_plugin_breaks(pydb):
     pydb.jinja2_exception_break = {}
     pydb.jinja2_breakpoints = {}
-
 
 def remove_exception_breakpoint(plugin, pydb, type, exception):
     if type == 'jinja2':
@@ -53,7 +49,6 @@ def remove_exception_breakpoint(plugin, pydb, type, exception):
         except:
             pass
     return False
-
 
 def get_breakpoints(plugin, pydb, type):
     if type == 'jinja2-line':
@@ -89,19 +84,15 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
 
     return frame
 
-
 def _is_jinja2_suspended(thread):
     return thread.additional_info.suspend_type == JINJA2_SUSPEND
-
 
 def _is_jinja2_context_call(frame):
     return "_Context__obj" in frame.f_locals
 
-
 def _is_jinja2_internal_function(frame):
     return 'self' in frame.f_locals and frame.f_locals['self'].__class__.__name__ in \
         ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
-
 
 def _find_jinja2_render_frame(frame):
     while frame is not None and not _is_jinja2_render_call(frame):
@@ -109,10 +100,10 @@ def _find_jinja2_render_frame(frame):
 
     return frame
 
+
 #=======================================================================================================================
 # Jinja2 Frame
 #=======================================================================================================================
-
 
 class Jinja2TemplateFrame:
 
@@ -179,7 +170,6 @@ def _is_missing(item):
         return True
     return False
 
-
 def _find_render_function_frame(frame):
     # in order to hide internal rendering functions
     old_frame = frame
@@ -192,7 +182,6 @@ def _find_render_function_frame(frame):
         return frame
     except:
         return old_frame
-
 
 def _get_jinja2_template_line(frame):
     debug_info = None
@@ -213,13 +202,13 @@ def _get_jinja2_template_line(frame):
 
     return None
 
-
 def _get_jinja2_template_filename(frame):
     if '__jinja_template__' in frame.f_globals:
         fname = frame.f_globals['__jinja_template__'].filename
         abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
         return abs_path_real_path_and_base[1]
     return None
+
 
 #=======================================================================================================================
 # Jinja2 Step Commands
@@ -231,15 +220,13 @@ def has_exception_breaks(plugin):
         return True
     return False
 
-
 def has_line_breaks(plugin):
     for file, breakpoints in dict_iter_items(plugin.main_debugger.jinja2_breakpoints):
         if len(breakpoints) > 0:
             return True
     return False
 
-
-def can_not_skip(plugin, pydb, frame):
+def can_not_skip(plugin, pydb, pydb_frame, frame):
     if pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)

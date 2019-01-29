@@ -49,9 +49,6 @@ class PyDevdAPI(object):
 
         return py_db.cmd_factory.make_version_message(seq)
 
-    def send_error_message(self, py_db, msg):
-        sys.stderr.write('pydevd: %s\n' % (msg,))
-
     def set_show_return_values(self, py_db, show_return_values):
         if show_return_values:
             py_db.show_return_values = True
@@ -292,8 +289,18 @@ class PyDevdAPI(object):
         Removes all the breakpoints from a given file or from all files if filename == '*'.
         '''
         changed = False
-        for file_to_id_to_breakpoint in [
-            py_db.file_to_id_to_line_breakpoint, py_db.file_to_id_to_plugin_breakpoint]:
+        lst = [
+            py_db.file_to_id_to_line_breakpoint,
+            py_db.file_to_id_to_plugin_breakpoint,
+            py_db.breakpoints
+        ]
+        if hasattr(py_db, 'django_breakpoints'):
+            lst.append(py_db.django_breakpoints)
+
+        if hasattr(py_db, 'jinja2_breakpoints'):
+            lst.append(py_db.jinja2_breakpoints)
+
+        for file_to_id_to_breakpoint in lst:
             if filename == '*':
                 if file_to_id_to_breakpoint:
                     file_to_id_to_breakpoint.clear()
@@ -441,22 +448,4 @@ class PyDevdAPI(object):
             raise NameError(exception_type)
 
         py_db.on_breakpoints_changed(removed=True)
-
-    def set_project_roots(self, py_db, project_roots):
-        '''
-        :param unicode project_roots:
-        '''
-        py_db.set_project_roots(project_roots)
-
-    # Add it to the namespace so that it's available as PyDevdAPI.ExcludeFilter
-    from _pydevd_bundle.pydevd_filtering import ExcludeFilter  # noqa
-
-    def set_exclude_filters(self, py_db, exclude_filters):
-        '''
-        :param list(PyDevdAPI.ExcludeFilter) exclude_filters:
-        '''
-        py_db.set_exclude_filters(exclude_filters)
-
-    def set_use_libraries_filter(self, py_db, use_libraries_filter):
-        py_db.set_use_libraries_filter(use_libraries_filter)
 

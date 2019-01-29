@@ -64,7 +64,6 @@ each command has a format:
 '''
 
 import itertools
-import os
 
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_imps._pydev_saved_modules import time
@@ -104,6 +103,7 @@ except:
         import StringIO  # @Reimport
     except:
         import io as StringIO
+
 
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport
@@ -294,6 +294,7 @@ class ReaderThread(PyDBDaemonThread):
                         self.handle_except()
                     return  # Finished communication.
 
+
                 # Note: the java backend is always expected to pass utf-8 encoded strings. We now work with unicode
                 # internally and thus, we may need to convert to the actual encoding where needed (i.e.: filenames
                 # on python 2 may need to be converted to the filesystem encoding).
@@ -303,6 +304,7 @@ class ReaderThread(PyDBDaemonThread):
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
                     sys.stderr.write(u'debugger: received >>%s<<\n' % (line,))
                     sys.stderr.flush()
+
 
                 args = line.split(u'\t', 2)
                 try:
@@ -436,9 +438,7 @@ def start_client(host, port):
         pass  # May not be available everywhere.
 
     try:
-        # 10 seconds default timeout
-        timeout = int(os.environ.get('PYDEVD_CONNECT_TIMEOUT', 10))
-        s.settimeout(timeout)
+        s.settimeout(10)  # 10 seconds timeout
         s.connect((host, port))
         s.settimeout(None)  # no timeout after connected
         pydevd_log(1, "Connected.")

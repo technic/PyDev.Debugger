@@ -1,5 +1,6 @@
 from _pydevd_bundle.pydevd_constants import USE_LIB_COPY, izip
 
+
 try:
     try:
         if USE_LIB_COPY:
@@ -10,6 +11,7 @@ try:
         import xmlrpc.client as xmlrpclib
 except ImportError:
     from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
+
 
 try:
     try:
@@ -23,15 +25,19 @@ try:
 except ImportError:
     from _pydev_imps._pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
 
+
+
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
 
+
 try:
-    execfile = execfile  # Not in Py3k
+    execfile=execfile #Not in Py3k
 except NameError:
     from _pydev_imps._pydev_execfile import execfile
+
 
 try:
     if USE_LIB_COPY:
@@ -39,7 +45,8 @@ try:
     else:
         import Queue as _queue
 except:
-    import queue as _queue  # @UnresolvedImport
+    import queue as _queue #@UnresolvedImport
+
 
 try:
     from _pydevd_bundle.pydevd_exec import Exec
@@ -49,5 +56,5 @@ except:
 try:
     from urllib import quote, quote_plus, unquote_plus
 except:
-    from urllib.parse import quote, quote_plus, unquote_plus  # @UnresolvedImport
+    from urllib.parse import quote, quote_plus, unquote_plus #@UnresolvedImport
 

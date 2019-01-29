@@ -186,7 +186,6 @@ class ReaderThread(threading.Thread):
             from Queue import Queue
 
         self.setDaemon(True)
-        self._buffer = b''
         self.sock = sock
         self._queue = Queue()
         self._kill = False
@@ -221,45 +220,13 @@ class ReaderThread(threading.Thread):
             sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, asked at:\n%s\n' % (unquote_plus(unquote_plus(msg)), context_message, frame_info))
         return msg
 
-    def _read(self, size):
-        while True:
-            buffer_len = len(self._buffer)
-            if buffer_len == size:
-                ret = self._buffer
-                self._buffer = b''
-                return ret
-
-            if buffer_len > size:
-                ret = self._buffer[:size]
-                self._buffer = self._buffer[size:]
-                return ret
-
-            r = self.sock.recv(max(size - buffer_len, 1024))
-            if not r:
-                return b''
-            self._buffer += r
-
-    def _read_line(self):
-        while True:
-            i = self._buffer.find(b'\n')
-            if i != -1:
-                i += 1  # Add the newline to the return
-                ret = self._buffer[:i]
-                self._buffer = self._buffer[i:]
-                return ret
-            else:
-                r = self.sock.recv(1024)
-                if not r:
-                    return b''
-                self._buffer += r
-
     def run(self):
         try:
             content_len = -1
 
+            stream = self.sock.makefile('rb')
             while not self._kill:
-                line = self._read_line()
-
+                line = stream.readline()
                 if not line:
                     break
 
@@ -272,40 +239,19 @@ class ReaderThread(threading.Thread):
 
                 if line.startswith(b'Content-Length:'):
                     content_len = int(line.strip().split(b':', 1)[1])
-                    continue
 
-                if content_len != -1:
-                    # If we previously received a content length, read until a '\r\n'.
+                elif content_len != -1:
                     if line == b'\r\n':
-                        json_contents = self._read(content_len)
-                        content_len = -1
-
-                        if len(json_contents) == 0:
-                            self.handle_except()
-                            return  # Finished communication.
-
-                        msg = json_contents
+                        msg = stream.read(content_len)
                         if IS_PY3K:
                             msg = msg.decode('utf-8')
                         print('Test Reader Thread Received %s' % (msg,))
                         self._queue.put(msg)
 
-                    continue
                 else:
-                    # No content len, regular line-based protocol message (remove trailing new-line).
-                    if line.endswith(b'\n\n'):
-                        line = line[:-2]
-
-                    elif line.endswith(b'\n'):
-                        line = line[:-1]
-
-                    elif line.endswith(b'\r'):
-                        line = line[:-1]
-
                     msg = line
                     if IS_PY3K:
                         msg = msg.decode('utf-8')
-                        print('Test Reader Thread Received %s' % (msg,))
                     self._queue.put(msg)
 
         except:
@@ -792,7 +738,6 @@ class AbstractWriterThread(threading.Thread):
             for r in reason:
                 if ('stop_reason="%s"' % (r,)) in last:
                     return True
-
             return False
 
         msg = self.wait_for_message(accept_message, timeout=timeout)
