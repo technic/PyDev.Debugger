@@ -92,7 +92,7 @@ class _PyDevJsonCommandProcessor(object):
 
         DEBUG = False
 
-        request = self.from_json(json_contents)
+        request = self.from_json(json_contents, update_ids_from_dap=True)
 
         if DEBUG:
             print('Process %s: %s\n' % (
@@ -123,7 +123,7 @@ class _PyDevJsonCommandProcessor(object):
         '''
         self.api.run(py_db)
         configuration_done_response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, configuration_done_response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, configuration_done_response, is_json=True)
 
     def on_threads_request(self, py_db, request):
         '''
@@ -176,7 +176,7 @@ class _PyDevJsonCommandProcessor(object):
         '''
         self._set_debug_options(py_db, request.arguments.kwargs)
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_attach_request(self, py_db, request):
         '''
@@ -184,7 +184,7 @@ class _PyDevJsonCommandProcessor(object):
         '''
         self._set_debug_options(py_db, request.arguments.kwargs)
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_pause_request(self, py_db, request):
         '''
@@ -196,7 +196,7 @@ class _PyDevJsonCommandProcessor(object):
         self.api.request_suspend_thread(py_db, thread_id=thread_id)
 
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_continue_request(self, py_db, request):
         '''
@@ -209,7 +209,7 @@ class _PyDevJsonCommandProcessor(object):
 
         body = {'allThreadsContinued': thread_id == '*'}
         response = pydevd_base_schema.build_response(request, kwargs={'body': body})
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_next_request(self, py_db, request):
         '''
@@ -226,7 +226,7 @@ class _PyDevJsonCommandProcessor(object):
         self.api.request_step(py_db, thread_id, step_cmd_id)
 
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_stepin_request(self, py_db, request):
         '''
@@ -243,7 +243,7 @@ class _PyDevJsonCommandProcessor(object):
         self.api.request_step(py_db, thread_id, step_cmd_id)
 
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_stepout_request(self, py_db, request):
         '''
@@ -260,7 +260,7 @@ class _PyDevJsonCommandProcessor(object):
         self.api.request_step(py_db, thread_id, step_cmd_id)
 
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def _get_hit_condition_expression(self, hit_condition):
         '''Following hit condition values are supported
@@ -299,7 +299,7 @@ class _PyDevJsonCommandProcessor(object):
         self.api.request_resume_thread(thread_id='*')
 
         response = pydevd_base_schema.build_response(request)
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_setbreakpoints_request(self, py_db, request):
         '''
@@ -348,7 +348,7 @@ class _PyDevJsonCommandProcessor(object):
 
         body = {'breakpoints': breakpoints_set}
         set_breakpoints_response = pydevd_base_schema.build_response(request, kwargs={'body':body})
-        return NetCommand(CMD_RETURN, 0, set_breakpoints_response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, set_breakpoints_response, is_json=True)
 
     def on_stacktrace_request(self, py_db, request):
         '''
@@ -376,7 +376,7 @@ class _PyDevJsonCommandProcessor(object):
         scopes = [Scope('Locals', int(variables_reference), False).to_dict()]
         body = ScopesResponseBody(scopes)
         scopes_response = pydevd_base_schema.build_response(request, kwargs={'body':body})
-        return NetCommand(CMD_RETURN, 0, scopes_response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, scopes_response, is_json=True)
 
     def on_evaluate_request(self, py_db, request):
         '''
@@ -427,7 +427,7 @@ class _PyDevJsonCommandProcessor(object):
             variables = []
             body = VariablesResponseBody(variables)
             variables_response = pydevd_base_schema.build_response(request, kwargs={'body':body})
-            return NetCommand(CMD_RETURN, 0, variables_response.to_dict(), is_json=True)
+            return NetCommand(CMD_RETURN, 0, variables_response, is_json=True)
 
     def on_setvariable_request(self, py_db, request):
         arguments = request.arguments  # : :type arguments: SetVariableArguments
@@ -446,14 +446,14 @@ class _PyDevJsonCommandProcessor(object):
                     'success': False,
                     'message': 'Unable to find thread to evaluate variable reference.'
             })
-            return NetCommand(CMD_RETURN, 0, variables_response.to_dict(), is_json=True)
+            return NetCommand(CMD_RETURN, 0, variables_response, is_json=True)
 
     def on_modules_request(self, py_db, request):
         modules_manager = py_db.cmd_factory.modules_manager  # : :type modules_manager: ModulesManager
         modules_info = modules_manager.get_modules_info()
         body = ModulesResponseBody(modules_info)
         variables_response = pydevd_base_schema.build_response(request, kwargs={'body':body})
-        return NetCommand(CMD_RETURN, 0, variables_response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, variables_response, is_json=True)
 
     def on_source_request(self, py_db, request):
         '''
@@ -469,7 +469,7 @@ class _PyDevJsonCommandProcessor(object):
 
         body = SourceResponseBody(content)
         response = pydevd_base_schema.build_response(request, kwargs={'body':body})
-        return NetCommand(CMD_RETURN, 0, response.to_dict(), is_json=True)
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
 
 process_net_command_json = _PyDevJsonCommandProcessor(pydevd_base_schema.from_json).process_net_command_json
