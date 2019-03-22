@@ -107,7 +107,7 @@ class TestCase(unittest.TestCase):
                 '127.0.0.1',
                 '--file',
                 '"connect(\\\\\\"127.0.0.1\\\\\\")"' if sys.platform == 'win32' else 'connect(\\"127.0.0.1\\")',
-                '"with spaces"'
+                '"with spaces"'  if sys.platform == 'win32' else 'with spaces',
             ])
         finally:
             SetupHolder.setup = original
