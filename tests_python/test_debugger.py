@@ -3000,6 +3000,25 @@ def step_method(request):
     return request.param
 
 
+def test_sysexit_on_filtered_file(case_setup):
+
+    def get_environ(writer):
+        env = os.environ.copy()
+        env.update({'PYDEVD_FILTERS': json.dumps({'**/_debugger_case_sysexit.py': True})})
+        return env
+
+    with case_setup.test_file('_debugger_case_sysexit.py', get_environ=get_environ, EXPECTED_RETURNCODE=1) as writer:
+        writer.write_add_exception_breakpoint_with_policy(
+            'SystemExit',
+            notify_on_handled_exceptions=1,  # Notify multiple times
+            notify_on_unhandled_exceptions=1,
+            ignore_libraries=0
+        )
+
+        writer.write_make_initial_run()
+        writer.finished_ok = True
+
+
 @pytest.mark.parametrize("environ", [
     {'PYDEVD_FILTER_LIBRARIES': '1'},  # Global setting for step over
     {'PYDEVD_FILTERS': json.dumps({'**/other.py': True})},  # specify as json
