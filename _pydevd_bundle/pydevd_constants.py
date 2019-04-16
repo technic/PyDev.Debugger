@@ -50,6 +50,7 @@ MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 RETURN_VALUES_DICT = '__pydevd_ret_val_dict'
 
 import os
+from functools import partial
 
 from _pydevd_bundle import pydevd_vm_type
 
@@ -318,11 +319,9 @@ def clear_cached_thread_id(thread):
             pass
 
 
-# Don't let threads be collected (so that id(thread) is guaranteed to be unique).
-_thread_id_to_thread_found = {}
-
-
-def _get_or_compute_thread_id_with_lock(thread, is_current_thread):
+def _get_or_compute_thread_id_with_lock_descriptive(thread, is_current_thread):
+    '''
+    '''
     with _thread_id_lock:
         # We do a new check with the lock in place just to be sure that nothing changed
         tid = getattr(thread, '__pydevd_id__', None)
@@ -339,6 +338,51 @@ def _get_or_compute_thread_id_with_lock(thread, is_current_thread):
         thread.__pydevd_id__ = tid
 
     return tid
+
+
+def _get_or_compute_thread_id_with_lock_int32(thread, is_current_thread):
+    thread_id = _get_or_compute_thread_id_with_lock_descriptive(thread, is_current_thread)
+
+    with _thread_id_lock:
+        if thread_id not in _thread_id_to_int32:
+            _thread_id_to_int32[thread_id] = _next_int32()
+        return _thread_id_to_int32[thread_id]
+
+
+# Don't let threads be collected (so that id(thread) is guaranteed to be unique).
+_thread_id_to_thread_found = {}
+_thread_id_to_int32 = {}
+_next_int32 = partial(next, itertools.count(0))
+
+COMPUTE_THREAD_ID_STRATEGY_DESCRIPTIVE = 'descriptive'
+COMPUTE_THREAD_ID_STRATEGY_INT32 = 'int32'
+
+# Set default
+_compute_thread_id_strategy = COMPUTE_THREAD_ID_STRATEGY_DESCRIPTIVE
+_get_or_compute_thread_id_with_lock = _get_or_compute_thread_id_with_lock_descriptive
+
+
+def set_compute_thread_id_strategy(strategy):
+    global _get_or_compute_thread_id_with_lock
+    global _compute_thread_id_strategy
+
+    if strategy == COMPUTE_THREAD_ID_STRATEGY_INT32:
+        new_strategy = _get_or_compute_thread_id_with_lock_int32
+
+    elif strategy == COMPUTE_THREAD_ID_STRATEGY_DESCRIPTIVE:
+        new_strategy = _get_or_compute_thread_id_with_lock_descriptive
+
+    else:
+        raise AssertionError('Unexpected strategy: %s' % (strategy,))
+
+    if _thread_id_to_thread_found:
+        raise AssertionError('It is no longer possible to change the compute thread id strategy (thread ids have been requested already).')
+
+    if strategy == _compute_thread_id_strategy:
+        assert _get_or_compute_thread_id_with_lock == new_strategy
+        return
+
+    _get_or_compute_thread_id_with_lock = new_strategy
 
 
 def get_current_thread_id(thread):
