@@ -139,6 +139,7 @@ file_system_encoding = getfilesystemencoding()
 
 _CACHE_FILE_TYPE = {}
 
+
 #=======================================================================================================================
 # PyDBCommandThread
 #=======================================================================================================================
@@ -598,7 +599,7 @@ class PyDB(object):
             return file_type
 
     def is_cache_file_type_empty(self):
-        return bool(_CACHE_FILE_TYPE)
+        return not _CACHE_FILE_TYPE
 
     def get_thread_local_trace_func(self):
         try:
