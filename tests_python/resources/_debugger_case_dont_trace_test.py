@@ -1,4 +1,11 @@
-from ._debugger_case_dont_trace import call_me_back
+import sys
+import os
+
+try:
+    from _debugger_case_dont_trace import call_me_back
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    from _debugger_case_dont_trace import call_me_back
 
 
 def my_callback():
